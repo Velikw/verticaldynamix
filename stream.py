@@ -25,7 +25,7 @@ def readProgressTracker(Market):
 
 def main():
     # Title
-    st.title("Simple Dashboard")
+    st.title("Simple Dashboard ddddd")
 
     # Load data
     data = load_data()
