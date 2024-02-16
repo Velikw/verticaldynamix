@@ -9,6 +9,24 @@ username = 'VerticalDynamix'
 password = 'Golemw#153'
 driver = '{ODBC Driver 17 for SQL Server}'
 
+def getLastUpdate(conn, Market):
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT TOP 1 eventDate, eventTime
+        FROM EventUpdateTB
+        WHERE Market = ?
+        ORDER BY eventDate DESC, eventTime DESC
+        """,
+        (Market,)
+    )
+    row = cursor.fetchone()
+    if row:
+        event_date, event_time = row
+        return f"{event_date.strftime('%Y-%m-%d')} at {event_time.strftime('%H:%M')}"
+    else:
+        return None
+
 def marketAll(conn):
     results=[]
     cursor=conn.cursor()
@@ -51,7 +69,17 @@ def main():
      # Load data for the selected option
     data = readProgressTracker(selected_option)
 
-    # Display data table
+    UpdateDate = getLastUpdate(conn, selected_option)
+    # date_str, time_str = UpdateDate
+    # st.write(f"Data was last updated on date: {date_str} at time: {time_str}")
+
+
+    if UpdateDate:
+        st.write(f"Data was last updated on {UpdateDate}")
+    else:
+        st.write("No update information available.")
+
+    # Display data tablef
     if not data.empty:
         st.write("## Data Table")
         st.write(data)
