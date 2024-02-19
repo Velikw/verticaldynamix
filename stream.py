@@ -9,6 +9,12 @@ username = 'VerticalDynamix'
 password = 'Golemw#153'
 driver = '{ODBC Driver 17 for SQL Server}'
 
+st.set_page_config(
+    page_title='Vertical Dynamix',
+    page_icon=':)',
+)
+st.sidebar.success("Select report")
+
 def getLastUpdate(conn, Market):
     cursor = conn.cursor()
     cursor.execute(
@@ -50,52 +56,60 @@ def readProgressTracker(Market):
         df = pd.DataFrame() 
     return df
 
-def main():
-    # Title
-    st.title("Progress Tracker")
+st.title("Progress Tracker")
 
-        # Establish database connection
+connection_string = f"Driver={driver};Server={server};Database={database};Uid={username};Pwd={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+conn = pyodbc.connect(connection_string)
+
+options = marketAll(conn)
+selected_option = st.selectbox('Select Market', options)
+
+data = readProgressTracker(selected_option)
+UpdateDate = getLastUpdate(conn, selected_option)
+
+
+if UpdateDate:
+    st.write(f"Data was last updated on {UpdateDate}")
+else:
+    st.write("No update information available.")
+
+if not data.empty:
+    st.write("## Data Table")
+    st.write(data)
+else:
+    st.write("No data available for the selected option.")
+
+# Establish a connection to the SQL Server database
+# conn = pyodbc.connect('DRIVER={SQL Server};SERVER=your_server;DATABASE=your_database;UID=your_username;PWD=your_password')
+
+# Streamlit UI
+# st.title('Insert Data into TargetModel Table')
+
+# Input form for Map Style
+map_style = st.text_input('Map Style')
+
+# Input form for Target
+target = st.number_input('Target', min_value=0)
+
+# Button to submit the form
+if st.button('Submit'):
+    # Create a cursor object to execute SQL queries
+    cursor = conn.cursor()
     
-    connection_string = f"Driver={driver};Server={server};Database={database};Uid={username};Pwd={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-    conn = pyodbc.connect(connection_string)
+    # Define the SQL query to insert data into the TargetModel table
+    sql_insert_data = '''
+    INSERT INTO TargetModel (Map_Style, Target)
+    VALUES (?, ?)
+    '''
+    
+    # Execute the SQL query
+    cursor.execute(sql_insert_data, (map_style, target))
+    
+    # Commit the transaction
+    conn.commit()
+    
+    # Close the cursor
+    cursor.close()
+    
+    st.success('Data inserted successfully!')
 
-    # connection_string = 'mssql+pyodbc://username:password@server/database?driver=ODBC+Driver+17+for+SQL+Server'
-    # engine = create_engine(connection_string)
-
-    options = marketAll(conn)
-    selected_option = st.selectbox('Select Market', options)
-
-    # st.write('Selected Options:', selected_option)
-     # Load data for the selected option
-    data = readProgressTracker(selected_option)
-
-    UpdateDate = getLastUpdate(conn, selected_option)
-    # date_str, time_str = UpdateDate
-    # st.write(f"Data was last updated on date: {date_str} at time: {time_str}")
-
-
-    if UpdateDate:
-        st.write(f"Data was last updated on {UpdateDate}")
-    else:
-        st.write("No update information available.")
-
-    # Display data tablef
-    if not data.empty:
-        st.write("## Data Table")
-        st.write(data)
-    else:
-        st.write("No data available for the selected option.")
-
-# def load_data():
-#     # Sample data
-#     # data = {
-#     #     'Name': ['John', 'Alice', 'Bob', 'Jane'],
-#     #     'Age': [25, 30, 35, 40],
-#     #     'Location': ['New York', 'Los Angeles', 'Chicago', 'Houston']
-#     # }
-#     data=readProgressTracker('Duluth')
-#     df = pd.DataFrame(data)
-#     return df
-
-if __name__ == "__main__":
-    main()
