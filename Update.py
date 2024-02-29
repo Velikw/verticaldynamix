@@ -46,9 +46,13 @@ driver = '{ODBC Driver 17 for SQL Server}'
 connection_string = f"Driver={driver};Server={server};Database={database};Uid={username};Pwd={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 conn = pyodbc.connect(connection_string)
 
+# Flag to control the thread
+inserting_data = False
+
 # Function to insert data into the database
 def insert_data():
-    while True:
+    global inserting_data
+    while inserting_data:
         # Connect to the database
         conn = pyodbc.connect(connection_string)
         
@@ -72,6 +76,7 @@ def insert_data():
 
 # Streamlit app
 def main():
+    global inserting_data
     st.title('Insert Data into TargetModel Table')
 
     # Button to start inserting data
@@ -79,11 +84,16 @@ def main():
 
     if start_button:
         st.write("Inserting data every 1 minute...")
+        inserting_data = True
         # Start a new thread for the insert_data function
         insert_thread = threading.Thread(target=insert_data)
         insert_thread.start()
+    
+    # Button to stop inserting data
+    stop_button = st.button("Stop Inserting")
+    if stop_button:
+        st.write("Stopping data insertion...")
+        inserting_data = False
 
 if __name__ == "__main__":
     main()
-
-
